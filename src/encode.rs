@@ -1,7 +1,6 @@
-use crate::{pixel::{Pixel, pixels_eq}, QoiHeader, bytes};
+use crate::{pixel::{Pixel, pixels_eq}, QoiHeader, bytes::{self, IDENT_DIFF, IDENT_LUMA}};
 
-pub fn encode_image(header: QoiHeader, data: Vec<u8>) -> Vec<u8>{
-    // let max_size = header.width * header.height * header.channels as u32 + mem::size_of::<QoiHeader>() as u32;
+pub fn encode_image(header: QoiHeader, data: Vec<u8>) -> Vec<u8> {
     let mut data_out: Vec<u8> = Vec::new();
 
     // Add header to data
@@ -69,14 +68,12 @@ pub fn encode_image(header: QoiHeader, data: Vec<u8>) -> Vec<u8>{
                        (diff_g >= 254 || diff_g <= 1) &&
                        (diff_b >= 254 || diff_b <= 1) {
                         // Small difference
-                        let identifier = 1 << 6;
-                        data_out.push(identifier | (diff_r.wrapping_add(2)) << 4 | (diff_g.wrapping_add(2)) << 2 | diff_b.wrapping_add(2));
+                        data_out.push(IDENT_DIFF | (diff_r.wrapping_add(2)) << 4 | (diff_g.wrapping_add(2)) << 2 | diff_b.wrapping_add(2));
                     } else if (diff_r_g >= 248 || diff_r_g <= 7) &&
                               (diff_g >= 224 || diff_g <= 31) &&
                               (diff_b_g >= 248 || diff_b_g <= 7) {
                         // Big difference
-                        let identifier = 1 << 7;
-                        data_out.push(identifier | diff_g.wrapping_add(32));
+                        data_out.push(IDENT_LUMA | diff_g.wrapping_add(32));
                         data_out.push(diff_r_g.wrapping_add(8) << 4 | diff_b_g.wrapping_add(8));
                     } else {
                         // Normal rgb
